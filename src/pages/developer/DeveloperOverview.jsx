@@ -11,39 +11,6 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import '../manager/Manager.css';
 import './Developer.css';
 
-const MOCK_MY_TASKS = [
-  { id: 1, title: 'Implement commit detail modal', status: 'in-progress', priority: 'high', due: '2026-02-24', assignedBy: 'Alex Morgan' },
-  { id: 2, title: 'Write unit tests for API service', status: 'todo', priority: 'medium', due: '2026-02-25', assignedBy: 'Alex Morgan' },
-  { id: 3, title: 'Fix SSE reconnection logic', status: 'in-progress', priority: 'high', due: '2026-02-23', assignedBy: 'Alex Morgan' },
-  { id: 4, title: 'Update developer documentation', status: 'todo', priority: 'low', due: '2026-02-27', assignedBy: 'Alex Morgan' },
-  { id: 5, title: 'Refactor auth context', status: 'done', priority: 'medium', due: '2026-02-20', assignedBy: 'Alex Morgan' },
-];
-
-const MOCK_MY_STATS = {
-  commitsThisWeek: 12,
-  prsOpen: 2,
-  tasksCompleted: 8,
-  tasksInProgress: 3,
-};
-
-const MOCK_ACTIVITY = Array.from({ length: 12 }, (_, i) => ({
-  week: `W${i + 1}`,
-  commits: Math.floor(Math.random() * 15) + 2,
-}));
-
-const MOCK_PROGRESS = {
-  summary: 'Good progress this week. You completed 8 tasks and contributed 12 commits. Your focus areas were the commit history UI and SSE integration.',
-  highlights: [
-    'Auth context refactoring merged',
-    '12 commits this week (above team average)',
-    '2 PRs awaiting review',
-  ],
-  risks: [
-    'SSE reconnection bug needs fix before release',
-    'Unit test coverage for API service at 45%',
-  ],
-};
-
 export default function DeveloperOverview() {
   const { user } = useAuth();
   const [myTasks, setMyTasks] = useState([]);
@@ -62,11 +29,12 @@ export default function DeveloperOverview() {
         ]);
         setMyTasks(Array.isArray(tasksData) ? tasksData : []);
         setActivity(Array.isArray(actData) ? actData : []);
-        setStats(MOCK_MY_STATS);
-      } catch {
-        setMyTasks(MOCK_MY_TASKS);
-        setActivity(MOCK_ACTIVITY);
-        setStats(MOCK_MY_STATS);
+        // Derive stats from real data
+        const inProgress = (Array.isArray(tasksData) ? tasksData : []).filter(t => t.status === 'in-progress').length;
+        const completed = (Array.isArray(tasksData) ? tasksData : []).filter(t => t.status === 'done').length;
+        setStats({ commitsThisWeek: (Array.isArray(actData) ? actData : []).reduce((s, w) => s + (w.commits || 0), 0), prsOpen: 0, tasksCompleted: completed, tasksInProgress: inProgress });
+      } catch (err) {
+        console.error('Failed to load developer data:', err);
       } finally {
         setLoading(false);
       }
@@ -74,16 +42,14 @@ export default function DeveloperOverview() {
       try {
         const report = await github.getProgressReport();
         setProgress(report);
-      } catch {
-        setProgress(MOCK_PROGRESS);
+      } catch (err) {
+        console.error('Failed to load progress report:', err);
       } finally {
         setProgressLoading(false);
       }
     }
     load();
   }, []);
-
-  if (loading) return <Spinner text="Loading your dashboard…" />;
 
   const activeTasks = myTasks.filter((t) => t.status !== 'done');
   const doneTasks = myTasks.filter((t) => t.status === 'done');

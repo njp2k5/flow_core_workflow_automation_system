@@ -15,6 +15,9 @@ import TeamPage from './pages/manager/TeamPage';
 import PullRequestsPage from './pages/manager/PullRequestsPage';
 import BranchesPage from './pages/manager/BranchesPage';
 import MeetingsPage from './pages/manager/MeetingsPage';
+import JiraPage from './pages/manager/JiraPage';
+import ConfluencePage from './pages/manager/ConfluencePage';
+import GetStartedPage from './pages/manager/GetStartedPage';
 
 // Developer pages
 import DeveloperOverview from './pages/developer/DeveloperOverview';
@@ -46,6 +49,9 @@ export default function App() {
             <Route path="/manager/pull-requests" element={<PullRequestsPage />} />
             <Route path="/manager/branches" element={<BranchesPage />} />
             <Route path="/manager/meetings" element={<MeetingsPage />} />
+            <Route path="/manager/jira" element={<JiraPage />} />
+            <Route path="/manager/confluence" element={<ConfluencePage />} />
+            <Route path="/manager/get-started" element={<GetStartedPage />} />
           </Route>
 
           {/* Developer routes */}
@@ -64,6 +70,9 @@ export default function App() {
             <Route path="/developer/pull-requests" element={<PullRequestsPage />} />
             <Route path="/developer/branches" element={<BranchesPage />} />
             <Route path="/developer/meetings" element={<MeetingsPage />} />
+            <Route path="/developer/jira" element={<JiraPage />} />
+            <Route path="/developer/confluence" element={<ConfluencePage />} />
+            <Route path="/developer/get-started" element={<GetStartedPage />} />
           </Route>
 
           {/* Fallback */}

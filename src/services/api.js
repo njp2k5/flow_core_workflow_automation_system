@@ -7,19 +7,27 @@ const MCP_BASE = import.meta.env.VITE_MCP_URL || 'http://localhost:3003';
 // ── Generic fetch wrapper ─────────────────────────────────────────────
 async function request(base, path, options = {}) {
   const token = localStorage.getItem('token');
-  const res = await fetch(`${base}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || 'Request failed');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(`${base}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Request failed');
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
   }
-  return res.json();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -219,6 +227,48 @@ export function parseAIReport(raw) {
     ...(raw.velocity && { velocity: raw.velocity }),
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SRS UPLOAD  (FastAPI)
+// ═══════════════════════════════════════════════════════════════════════
+export const srs = {
+  upload: async (file) => {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${FASTAPI_BASE}/srs/upload`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Upload failed');
+    }
+    return res.json();
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+//  JIRA  (FastAPI proxy)
+// ═══════════════════════════════════════════════════════════════════════
+export const jira = {
+  getProject:      () => request(FASTAPI_BASE, '/api/jira/projects'),
+  getTickets:      () => request(FASTAPI_BASE, '/api/jira/tickets'),
+  getBoardSummary: () => request(FASTAPI_BASE, '/api/jira/board/summary'),
+  getSprints:      () => request(FASTAPI_BASE, '/api/jira/sprints'),
+  getUsers:        () => request(FASTAPI_BASE, '/api/jira/users'),
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+//  CONFLUENCE  (FastAPI proxy)
+// ═══════════════════════════════════════════════════════════════════════
+export const confluence = {
+  getSpace: () => request(FASTAPI_BASE, '/api/confluence/space'),
+  getPages: () => request(FASTAPI_BASE, '/api/confluence/pages'),
+};
 
 // ═══════════════════════════════════════════════════════════════════════
 //  GITHUB MCP SERVER  (http://localhost:3003)

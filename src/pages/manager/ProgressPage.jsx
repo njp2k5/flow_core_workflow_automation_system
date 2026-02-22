@@ -6,26 +6,6 @@ import { github } from '../../services/api';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './Manager.css';
 
-const MOCK_ACTIVITY = Array.from({ length: 12 }, (_, i) => ({
-  week: `W${i + 1}`,
-  commits: Math.floor(Math.random() * 30) + 5,
-}));
-
-const MOCK_PROGRESS = {
-  summary: 'Strong progress this week with 15 commits across 4 contributors. The team completed the NL task assignment feature and resolved critical auth bugs.',
-  highlights: [
-    'Natural language task assignment completed & deployed',
-    'Auth token refresh bug fixed — zero downtime',
-    'Meeting summary pipeline in production',
-    'API documentation updated and published',
-  ],
-  risks: [
-    '5 open issues pending triage',
-    'Test coverage dropped to 72% (target: 80%)',
-    'Dependency updates overdue on 3 packages',
-  ],
-};
-
 export default function ProgressPage() {
   const [progress, setProgress] = useState(null);
   const [activity, setActivity] = useState([]);
@@ -40,17 +20,14 @@ export default function ProgressPage() {
         ]);
         setProgress(report);
         setActivity(Array.isArray(act) ? act : []);
-      } catch {
-        setProgress(MOCK_PROGRESS);
-        setActivity(MOCK_ACTIVITY);
+      } catch (err) {
+        console.error('Failed to load progress data:', err);
       } finally {
         setLoading(false);
       }
     }
     load();
   }, []);
-
-  if (loading) return <Spinner text="Generating progress report…" />;
 
   return (
     <div className="manager-overview">
@@ -62,6 +39,7 @@ export default function ProgressPage() {
       <div className="overview-grid">
         <Card delay={0.1}>
           <SectionHeader title="Weekly Commit Activity" />
+          {loading && activity.length === 0 ? <Spinner text="Loading activity…" /> : (
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={activity}>
@@ -74,10 +52,12 @@ export default function ProgressPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+          )}
         </Card>
 
         <Card delay={0.15}>
           <SectionHeader title="Trend Overview" />
+          {loading && activity.length === 0 ? <Spinner text="Loading trends…" /> : (
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={240}>
               <AreaChart data={activity}>
@@ -96,10 +76,13 @@ export default function ProgressPage() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          )}
         </Card>
       </div>
 
-      {progress && (
+      {loading && !progress ? (
+        <Card delay={0.2}><Spinner text="Generating AI progress report…" /></Card>
+      ) : progress && (
         <Card delay={0.2}>
           <SectionHeader title="AI Progress Report" />
           <div className="progress-content">

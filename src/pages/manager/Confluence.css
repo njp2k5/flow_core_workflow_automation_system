@@ -1,0 +1,375 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Confluence Page Styles
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Header row ────────────────────────────────────────────────────── */
+.confluence-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.confluence-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent);
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.06);
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.confluence-external-link:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+/* ── Space info card ───────────────────────────────────────────────── */
+.confluence-space-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confluence-info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.confluence-info-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.confluence-info-value {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.confluence-info-code {
+  font-size: 0.78rem;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.confluence-type-badge {
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  text-transform: capitalize;
+}
+
+.confluence-space-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-top: 4px;
+  transition: opacity 0.2s;
+}
+
+.confluence-space-link:hover {
+  opacity: 0.8;
+}
+
+/* ── Recent activity list ──────────────────────────────────────────── */
+.confluence-recent-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.confluence-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.confluence-recent-item:last-child {
+  border-bottom: none;
+}
+
+.confluence-recent-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.confluence-recent-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.confluence-recent-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+}
+
+.confluence-recent-title:hover {
+  color: var(--accent);
+}
+
+.confluence-recent-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.confluence-recent-version {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  flex-shrink: 0;
+}
+
+/* ── Contributors grid ─────────────────────────────────────────────── */
+.confluence-contributors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.confluence-contributor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 12px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.confluence-contributor-card:hover {
+  background: var(--bg-hover);
+}
+
+.confluence-contributor-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.confluence-contributor-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.confluence-contributor-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ── Search bar ────────────────────────────────────────────────────── */
+.confluence-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  transition: border-color 0.2s;
+}
+
+.confluence-search-wrap:focus-within {
+  border-color: var(--accent);
+}
+
+.confluence-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  width: 160px;
+  font-family: inherit;
+}
+
+.confluence-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Pages list ────────────────────────────────────────────────────── */
+.confluence-pages-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.confluence-page-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.confluence-page-row:last-child {
+  border-bottom: none;
+}
+
+.confluence-page-row:hover {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.confluence-page-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.confluence-page-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.confluence-page-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.confluence-page-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.confluence-page-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.confluence-page-status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  text-transform: capitalize;
+}
+
+.confluence-page-status.current {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.confluence-page-status.draft {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.confluence-page-status.archived {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+.confluence-page-version {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.confluence-page-ext {
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.confluence-page-row:hover .confluence-page-ext {
+  color: var(--accent);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .confluence-header-row {
+    flex-direction: column;
+  }
+
+  .confluence-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .confluence-info-label {
+    min-width: 0;
+  }
+
+  .confluence-page-right {
+    gap: 6px;
+  }
+
+  .confluence-page-status {
+    display: none;
+  }
+}

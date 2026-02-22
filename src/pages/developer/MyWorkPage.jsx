@@ -7,15 +7,6 @@ import { tasks as tasksApi } from '../../services/api';
 import '../manager/Manager.css';
 import './Developer.css';
 
-const MOCK_MY_TASKS = [
-  { id: 1, title: 'Implement commit detail modal', status: 'in-progress', priority: 'high', due: '2026-02-24', assignedBy: 'Alex Morgan', description: 'Add a modal that shows file changes when clicking a commit row' },
-  { id: 2, title: 'Write unit tests for API service', status: 'todo', priority: 'medium', due: '2026-02-25', assignedBy: 'Alex Morgan', description: 'Cover all API functions with unit tests' },
-  { id: 3, title: 'Fix SSE reconnection logic', status: 'in-progress', priority: 'high', due: '2026-02-23', assignedBy: 'Alex Morgan', description: 'Handle SSE disconnects gracefully with exponential backoff' },
-  { id: 4, title: 'Update developer documentation', status: 'todo', priority: 'low', due: '2026-02-27', assignedBy: 'Alex Morgan', description: 'Update API docs and add setup guide' },
-  { id: 5, title: 'Refactor auth context', status: 'done', priority: 'medium', due: '2026-02-20', assignedBy: 'Alex Morgan', description: 'Clean up auth context and add token refresh' },
-  { id: 6, title: 'Add loading states to dashboard', status: 'done', priority: 'low', due: '2026-02-19', assignedBy: 'Alex Morgan', description: 'Add skeleton loaders and spinners' },
-];
-
 export default function MyWorkPage() {
   const { user } = useAuth();
   const [myTasks, setMyTasks] = useState([]);
@@ -27,8 +18,8 @@ export default function MyWorkPage() {
       try {
         const data = await tasksApi.getMyTasks();
         setMyTasks(Array.isArray(data) ? data : []);
-      } catch {
-        setMyTasks(MOCK_MY_TASKS);
+      } catch (err) {
+        console.error('Failed to load tasks:', err);
       } finally {
         setLoading(false);
       }
@@ -46,8 +37,6 @@ export default function MyWorkPage() {
     todo: myTasks.filter((t) => t.status === 'todo').length,
     done: myTasks.filter((t) => t.status === 'done').length,
   };
-
-  if (loading) return <Spinner text="Loading your tasks…" />;
 
   return (
     <div className="manager-overview">
@@ -87,7 +76,9 @@ export default function MyWorkPage() {
           </div>
         </SectionHeader>
 
-        {filtered.length === 0 ? (
+        {loading && myTasks.length === 0 ? (
+          <Spinner text="Loading your tasks…" />
+        ) : filtered.length === 0 ? (
           <EmptyState icon={ListTodo} message="No tasks in this category" />
         ) : (
           <div className="my-tasks-list">

@@ -17,49 +17,6 @@ import { github, subscribeDashboardStream } from '../../services/api';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './Manager.css';
 
-// ── Mock data for when MCP server is unavailable ──────────────────────
-const MOCK_REPO = {
-  name: 'workflow-automation',
-  language: 'Python',
-  stars: 24,
-  forks: 8,
-  open_issues: 5,
-  description: 'AI-powered workflow automation platform',
-};
-
-const MOCK_COMMITS = [
-  { sha: 'a1b2c3d', message: 'feat: add task assignment via NL', author: 'Sam Rivera', date: '2026-02-22T10:30:00Z' },
-  { sha: 'e4f5g6h', message: 'fix: resolve auth token refresh bug', author: 'Jordan Lee', date: '2026-02-21T16:20:00Z' },
-  { sha: 'i7j8k9l', message: 'chore: update dependencies', author: 'Alex Morgan', date: '2026-02-21T09:15:00Z' },
-  { sha: 'm0n1o2p', message: 'feat: meeting summary generation', author: 'Casey Kim', date: '2026-02-20T14:45:00Z' },
-  { sha: 'q3r4s5t', message: 'docs: update API documentation', author: 'Sam Rivera', date: '2026-02-20T11:00:00Z' },
-];
-
-const MOCK_CONTRIBUTORS = [
-  { login: 'samrivera', name: 'Sam Rivera', avatar_url: 'https://api.dicebear.com/7.x/initials/svg?seed=SR&backgroundColor=06b6d4', contributions: 47 },
-  { login: 'jordanlee', name: 'Jordan Lee', avatar_url: 'https://api.dicebear.com/7.x/initials/svg?seed=JL&backgroundColor=10b981', contributions: 35 },
-  { login: 'caseykim', name: 'Casey Kim', avatar_url: 'https://api.dicebear.com/7.x/initials/svg?seed=CK&backgroundColor=f59e0b', contributions: 28 },
-  { login: 'alexmorgan', name: 'Alex Morgan', avatar_url: 'https://api.dicebear.com/7.x/initials/svg?seed=AM&backgroundColor=6366f1', contributions: 22 },
-];
-
-const MOCK_ACTIVITY = Array.from({ length: 12 }, (_, i) => ({
-  week: `W${i + 1}`,
-  commits: Math.floor(Math.random() * 30) + 5,
-}));
-
-const MOCK_PROGRESS = {
-  summary: 'The team has made strong progress this week with 15 commits across 4 contributors. Key highlights include the new NL task assignment feature and critical auth bug fixes.',
-  highlights: [
-    'Natural language task assignment feature completed',
-    'Authentication token refresh bug resolved',
-    'Meeting summary generation pipeline deployed',
-  ],
-  risks: [
-    '5 open issues need triage',
-    'Test coverage dropped to 72%',
-  ],
-};
-
 export default function ManagerOverview() {
   const [repo, setRepo] = useState(null);
   const [commits, setCommits] = useState([]);
@@ -91,12 +48,8 @@ export default function ManagerOverview() {
           if (type === 'contributors') setContributors(Array.isArray(data) ? data : []);
           if (type === 'repo_info') setRepo(data);
         });
-      } catch {
-        // Use mock data
-        setRepo(MOCK_REPO);
-        setCommits(MOCK_COMMITS);
-        setContributors(MOCK_CONTRIBUTORS);
-        setActivity(MOCK_ACTIVITY);
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
       } finally {
         setLoading(false);
       }
@@ -104,8 +57,8 @@ export default function ManagerOverview() {
       try {
         const report = await github.getProgressReport();
         setProgress(report);
-      } catch {
-        setProgress(MOCK_PROGRESS);
+      } catch (err) {
+        console.error('Failed to load progress report:', err);
       } finally {
         setProgressLoading(false);
       }
@@ -114,8 +67,6 @@ export default function ManagerOverview() {
     load();
     return () => unsub?.();
   }, []);
-
-  if (loading) return <Spinner text="Loading dashboard…" />;
 
   return (
     <div className="manager-overview">
@@ -142,6 +93,7 @@ export default function ManagerOverview() {
         {/* Activity chart */}
         <Card className="chart-card" delay={0.25}>
           <SectionHeader title="Commit Activity" />
+          {loading && activity.length === 0 ? <Spinner text="Loading activity…" /> : (
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={activity}>
@@ -161,6 +113,7 @@ export default function ManagerOverview() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          )}
         </Card>
 
         {/* AI Progress report */}
@@ -195,6 +148,7 @@ export default function ManagerOverview() {
       {/* Recent commits */}
       <Card delay={0.35}>
         <SectionHeader title="Recent Commits" />
+        {loading && commits.length === 0 ? <Spinner text="Loading commits…" /> : (
         <div className="commits-list">
           {commits.map((c, i) => (
             <motion.div
@@ -217,11 +171,13 @@ export default function ManagerOverview() {
             </motion.div>
           ))}
         </div>
+        )}
       </Card>
 
       {/* Top contributors */}
       <Card delay={0.45}>
         <SectionHeader title="Top Contributors" />
+        {loading && contributors.length === 0 ? <Spinner text="Loading contributors…" /> : (
         <div className="contributors-grid">
           {contributors.slice(0, 6).map((c, i) => (
             <motion.div
@@ -240,6 +196,7 @@ export default function ManagerOverview() {
             </motion.div>
           ))}
         </div>
+        )}
       </Card>
     </div>
   );

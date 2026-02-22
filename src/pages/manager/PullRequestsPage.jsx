@@ -5,14 +5,6 @@ import { Card, SectionHeader, Spinner, EmptyState } from '../../components/Card'
 import { github } from '../../services/api';
 import './Manager.css';
 
-const MOCK_PRS = [
-  { number: 42, title: 'feat: natural language task assignment', state: 'open', user: { login: 'samrivera' }, created_at: '2026-02-22T08:00:00Z', merged_at: null },
-  { number: 41, title: 'fix: auth token refresh on expired sessions', state: 'closed', user: { login: 'jordanlee' }, created_at: '2026-02-21T12:00:00Z', merged_at: '2026-02-21T18:00:00Z' },
-  { number: 40, title: 'feat: meeting summary AI pipeline', state: 'closed', user: { login: 'caseykim' }, created_at: '2026-02-20T09:00:00Z', merged_at: '2026-02-20T16:00:00Z' },
-  { number: 39, title: 'chore: upgrade React to v19', state: 'open', user: { login: 'alexmorgan' }, created_at: '2026-02-19T14:00:00Z', merged_at: null },
-  { number: 38, title: 'docs: comprehensive API docs', state: 'closed', user: { login: 'samrivera' }, created_at: '2026-02-18T11:00:00Z', merged_at: '2026-02-19T10:00:00Z' },
-];
-
 export default function PullRequestsPage() {
   const [prs, setPrs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,8 +15,8 @@ export default function PullRequestsPage() {
       try {
         const data = await github.getPullRequests();
         setPrs(Array.isArray(data) ? data : []);
-      } catch {
-        setPrs(MOCK_PRS);
+      } catch (err) {
+        console.error('Failed to load pull requests:', err);
       } finally {
         setLoading(false);
       }
@@ -38,8 +30,6 @@ export default function PullRequestsPage() {
     if (filter === 'closed') return pr.state === 'closed' && !pr.merged_at;
     return true;
   });
-
-  if (loading) return <Spinner text="Loading pull requests…" />;
 
   return (
     <div className="manager-overview">
@@ -63,7 +53,9 @@ export default function PullRequestsPage() {
           </div>
         </SectionHeader>
 
-        {filtered.length === 0 ? (
+        {loading && prs.length === 0 ? (
+          <Spinner text="Loading pull requests…" />
+        ) : filtered.length === 0 ? (
           <EmptyState icon={GitPullRequest} message="No pull requests found" />
         ) : (
           <div className="pr-list">

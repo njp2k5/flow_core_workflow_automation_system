@@ -5,15 +5,6 @@ import { Card, SectionHeader, Spinner, EmptyState } from '../../components/Card'
 import { github } from '../../services/api';
 import './Manager.css';
 
-const MOCK_BRANCHES = [
-  { name: 'main', protected: true },
-  { name: 'develop', protected: true },
-  { name: 'feature/nl-task-assign', protected: false },
-  { name: 'fix/auth-refresh', protected: false },
-  { name: 'feature/meeting-summaries', protected: false },
-  { name: 'chore/dep-updates', protected: false },
-];
-
 export default function BranchesPage() {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,16 +14,14 @@ export default function BranchesPage() {
       try {
         const data = await github.getBranches();
         setBranches(Array.isArray(data) ? data : []);
-      } catch {
-        setBranches(MOCK_BRANCHES);
+      } catch (err) {
+        console.error('Failed to load branches:', err);
       } finally {
         setLoading(false);
       }
     }
     load();
   }, []);
-
-  if (loading) return <Spinner text="Loading branches…" />;
 
   return (
     <div className="manager-overview">
@@ -43,7 +32,9 @@ export default function BranchesPage() {
 
       <Card delay={0.1}>
         <SectionHeader title={`${branches.length} Branches`} />
-        {branches.length === 0 ? (
+        {loading && branches.length === 0 ? (
+          <Spinner text="Loading branches…" />
+        ) : branches.length === 0 ? (
           <EmptyState icon={GitBranch} message="No branches found" />
         ) : (
           <div className="branch-list">

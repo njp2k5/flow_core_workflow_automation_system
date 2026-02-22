@@ -12,6 +12,9 @@ import {
   BarChart3,
   GitPullRequest,
   GitBranch,
+  Ticket,
+  BookOpen,
+  Rocket,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -24,6 +27,9 @@ const managerLinks = [
   { to: '/manager/pull-requests', icon: GitPullRequest, label: 'Pull Requests' },
   { to: '/manager/branches', icon: GitBranch, label: 'Branches' },
   { to: '/manager/meetings', icon: FileText, label: 'Meetings' },
+  { to: '/manager/jira', icon: Ticket, label: 'Jira Board' },
+  { to: '/manager/confluence', icon: BookOpen, label: 'Confluence' },
+  { to: '/manager/get-started', icon: Rocket, label: 'Get Started' },
 ];
 
 const developerLinks = [
@@ -35,6 +41,9 @@ const developerLinks = [
   { to: '/developer/pull-requests', icon: GitPullRequest, label: 'Pull Requests' },
   { to: '/developer/branches', icon: GitBranch, label: 'Branches' },
   { to: '/developer/meetings', icon: FileText, label: 'Meetings' },
+  { to: '/developer/jira', icon: Ticket, label: 'Jira Board' },
+  { to: '/developer/confluence', icon: BookOpen, label: 'Confluence' },
+  { to: '/developer/get-started', icon: Rocket, label: 'Get Started' },
 ];
 
 export default function Sidebar() {

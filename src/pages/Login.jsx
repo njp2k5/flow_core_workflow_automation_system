@@ -155,8 +155,7 @@ export default function Login() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
-          <span>Demo accounts:</span>
-          <code>manager</code> or <code>developer</code> (any password)
+          <span>Sign in with your workspace credentials</span>
         </motion.div>
       </motion.div>
     </div>

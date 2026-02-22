@@ -3,25 +3,23 @@ import { auth } from '../services/api';
 
 const AuthContext = createContext(null);
 
-// ── Mock users for development (remove when backend is ready) ─────────
-const MOCK_USERS = {
-  manager: {
-    id: 1,
-    username: 'manager',
-    name: 'Alex Morgan',
-    email: 'alex@company.com',
-    role: 'manager',
-    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=AM&backgroundColor=6366f1',
-  },
-  developer: {
-    id: 2,
-    username: 'developer',
-    name: 'Sam Rivera',
-    email: 'sam@company.com',
-    role: 'developer',
-    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=SR&backgroundColor=06b6d4',
-  },
-};
+// Map backend designation to frontend role key
+function mapRole(designation) {
+  if (!designation) return 'developer';
+  const d = designation.toLowerCase();
+  if (d === 'manager' || d === 'project manager' || d === 'lead') return 'manager';
+  return 'developer';
+}
+
+function getInitials(name) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -35,30 +33,27 @@ export function AuthProvider({ children }) {
         setUser(JSON.parse(stored));
       } catch {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
     setLoading(false);
   }, []);
 
   const login = async (username, password) => {
-    try {
-      // Try real backend first
-      const data = await auth.login({ username, password });
-      const userData = data.user || data;
-      localStorage.setItem('token', data.token || '');
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      return userData;
-    } catch {
-      // Fallback to mock users during development
-      const mockUser = MOCK_USERS[username];
-      if (mockUser) {
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setUser(mockUser);
-        return mockUser;
-      }
-      throw new Error('Invalid credentials');
-    }
+    const data = await auth.login(username, password);
+    // data: { access_token, token_type, member_name, designation }
+    const role = mapRole(data.designation);
+    const initials = getInitials(data.member_name || username);
+    const userData = {
+      name: data.member_name,
+      designation: data.designation,
+      role,
+      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${initials}&backgroundColor=6366f1`,
+    };
+    localStorage.setItem('token', data.access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    return userData;
   };
 
   const logout = () => {

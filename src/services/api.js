@@ -1,8 +1,8 @@
-// ── FastAPI Backend (PostgreSQL data) ──────────────────────────────────
-const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000';
+// ── FastAPI Backend (proxied through Vite in dev) ─────────────────────
+const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || '';
 
-// ── GitHub MCP Server ─────────────────────────────────────────────────
-const MCP_BASE = import.meta.env.VITE_MCP_URL || 'http://localhost:3003';
+// ── GitHub MCP Server (proxied as /mcp → localhost:3003) ──────────────
+const MCP_BASE = import.meta.env.VITE_MCP_URL || '/mcp';
 
 // ── Generic fetch wrapper ─────────────────────────────────────────────
 async function request(base, path, options = {}) {
@@ -10,10 +10,14 @@ async function request(base, path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
+  const method = (options.method || 'GET').toUpperCase();
+  const isBodyRequest = method !== 'GET' && method !== 'HEAD';
+
   try {
     const res = await fetch(`${base}${path}`, {
       headers: {
-        'Content-Type': 'application/json',
+        // Only set Content-Type on requests that carry a body
+        ...(isBodyRequest ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
@@ -34,11 +38,23 @@ async function request(base, path, options = {}) {
 //  AUTH  (FastAPI + Postgres)
 // ═══════════════════════════════════════════════════════════════════════
 export const auth = {
-  login: (credentials) =>
-    request(FASTAPI_BASE, '/auth/login', {
+  login: (username, password) => {
+    const body = new URLSearchParams();
+    body.append('username', username);
+    body.append('password', password);
+
+    return fetch(`${FASTAPI_BASE}/auth/token`, {
       method: 'POST',
-      body: JSON.stringify(credentials),
-    }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Login failed');
+      }
+      return res.json();
+    });
+  },
   me: () => request(FASTAPI_BASE, '/auth/me'),
 };
 
@@ -54,7 +70,7 @@ export const tasks = {
       body: JSON.stringify(payload),
     }),
   assignNL: (text) =>
-    request(FASTAPI_BASE, '/tasks/assign', {
+    request(FASTAPI_BASE, '/api/tasks/assign-nl', {
       method: 'POST',
       body: JSON.stringify({ text }),
     }),

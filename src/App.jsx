@@ -8,12 +8,9 @@ import Login from './pages/Login';
 
 // Manager pages
 import ManagerOverview from './pages/manager/ManagerOverview';
-import CommitsPage from './pages/manager/CommitsPage';
 import ProgressPage from './pages/manager/ProgressPage';
 import TaskAssignPage from './pages/manager/TaskAssignPage';
 import TeamPage from './pages/manager/TeamPage';
-import PullRequestsPage from './pages/manager/PullRequestsPage';
-import BranchesPage from './pages/manager/BranchesPage';
 import MeetingsPage from './pages/manager/MeetingsPage';
 import JiraPage from './pages/manager/JiraPage';
 import ConfluencePage from './pages/manager/ConfluencePage';
@@ -42,12 +39,9 @@ export default function App() {
             }
           >
             <Route path="/manager" element={<ManagerOverview />} />
-            <Route path="/manager/commits" element={<CommitsPage />} />
             <Route path="/manager/progress" element={<ProgressPage />} />
             <Route path="/manager/tasks" element={<TaskAssignPage />} />
             <Route path="/manager/team" element={<TeamPage />} />
-            <Route path="/manager/pull-requests" element={<PullRequestsPage />} />
-            <Route path="/manager/branches" element={<BranchesPage />} />
             <Route path="/manager/meetings" element={<MeetingsPage />} />
             <Route path="/manager/jira" element={<JiraPage />} />
             <Route path="/manager/confluence" element={<ConfluencePage />} />
@@ -64,11 +58,8 @@ export default function App() {
           >
             <Route path="/developer" element={<DeveloperOverview />} />
             <Route path="/developer/my-work" element={<MyWorkPage />} />
-            <Route path="/developer/commits" element={<CommitsPage />} />
             <Route path="/developer/progress" element={<ProgressPage />} />
             <Route path="/developer/team" element={<TeamPage />} />
-            <Route path="/developer/pull-requests" element={<PullRequestsPage />} />
-            <Route path="/developer/branches" element={<BranchesPage />} />
             <Route path="/developer/meetings" element={<MeetingsPage />} />
             <Route path="/developer/jira" element={<JiraPage />} />
             <Route path="/developer/confluence" element={<ConfluencePage />} />

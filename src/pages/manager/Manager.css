@@ -440,7 +440,24 @@
   flex-shrink: 0;
 }
 
+.team-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
 .team-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex: 1;
 }
 
@@ -448,6 +465,23 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.team-role-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 5px;
+  width: fit-content;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent);
+}
+
+.team-role-badge[data-manager="true"] {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
 }
 
 .team-stats {
@@ -535,4 +569,418 @@
 .task-priority.low {
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Manage Tasks Page (.mt-*)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Header actions (refresh + go-to-jira) ─────────────────────────── */
+.mt-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mt-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.mt-refresh-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mt-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mt-goto-jira-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.mt-goto-jira-btn:hover {
+  opacity: 0.88;
+}
+
+/* ── Status chip filters ───────────────────────────────────────────── */
+.mt-status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mt-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.mt-chip:hover {
+  border-color: var(--text-muted);
+}
+
+.mt-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.mt-chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Search bar ────────────────────────────────────────────────────── */
+.mt-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 14px;
+  transition: border-color 0.2s;
+}
+
+.mt-search-bar:focus-within {
+  border-color: var(--accent);
+}
+
+.mt-search-bar svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.mt-search-bar input {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.mt-search-bar input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Ticket list ───────────────────────────────────────────────────── */
+.mt-tickets-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mt-ticket-row {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.mt-ticket-row:last-child {
+  border-bottom: none;
+}
+
+.mt-ticket-row:hover {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.mt-ticket-row.expanded {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.mt-ticket-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+  cursor: pointer;
+}
+
+.mt-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mt-ticket-key {
+  font-size: 0.75rem;
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+  padding: 2px 7px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.mt-ticket-summary {
+  flex: 1;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.mt-ticket-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.mt-priority-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.mt-assignee-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.mt-unassigned {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ── Ticket detail panel ───────────────────────────────────────────── */
+.mt-ticket-detail {
+  padding: 0 4px 14px;
+  overflow: hidden;
+}
+
+.mt-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.mt-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mt-detail-item.full {
+  grid-column: 1 / -1;
+}
+
+.mt-detail-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.mt-detail-value {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.mt-detail-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.mt-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.mt-labels-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.mt-label-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent);
+  border-radius: 5px;
+}
+
+.mt-ticket-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 12px;
+  transition: opacity 0.2s;
+}
+
+.mt-ticket-link:hover {
+  opacity: 0.75;
+}
+
+/* ── Locally created tasks ─────────────────────────────────────────── */
+.mt-local-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mt-local-task-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+
+.mt-local-task-row:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.mt-local-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mt-local-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mt-local-desc {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mt-local-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+.mt-local-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mt-status-select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 0.73rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.mt-status-select:focus {
+  border-color: var(--accent);
+}
+
+.mt-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.mt-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* ── Spinning icon ─────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }

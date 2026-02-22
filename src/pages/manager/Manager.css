@@ -1,0 +1,538 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Manager Dashboard Styles
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Page header ───────────────────────────────────────────────────── */
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.page-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
+/* ── Stat grid ─────────────────────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+/* ── Overview grid (2 columns) ─────────────────────────────────────── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .overview-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Chart card ────────────────────────────────────────────────────── */
+.chart-wrap {
+  margin-top: 8px;
+}
+
+/* ── Progress report ───────────────────────────────────────────────── */
+.progress-content {
+  font-size: 0.85rem;
+}
+
+.progress-summary {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.progress-section {
+  margin-bottom: 12px;
+}
+
+.progress-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #10b981;
+  margin: 0 0 6px;
+}
+
+.progress-section.risks h4 {
+  color: #f59e0b;
+}
+
+.progress-section ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.progress-section li {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+/* ── Commits list ──────────────────────────────────────────────────── */
+.commits-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.commit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.commit-row:last-child {
+  border-bottom: none;
+}
+
+.commit-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.commit-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.commit-msg {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commit-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.commit-author {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.commit-sha {
+  font-size: 0.75rem;
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Contributors grid ─────────────────────────────────────────────── */
+.contributors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.contributor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.contributor-card:hover {
+  background: var(--bg-hover);
+}
+
+.contributor-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.contributor-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.contributor-commits {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ── Task assignment (shared) ──────────────────────────────────────── */
+.task-assign-section {
+  margin-bottom: 20px;
+}
+
+.task-input-wrap {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.task-textarea {
+  flex: 1;
+  min-height: 80px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.task-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.assign-btn {
+  align-self: flex-end;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.assign-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.assign-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+/* ── Task result message ───────────────────────────────────────────── */
+.task-result {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+}
+
+.task-result.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+.task-result.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+/* ── Meeting summaries ─────────────────────────────────────────────── */
+.meeting-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meeting-item {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.meeting-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.meeting-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.meeting-summary {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.meeting-participants {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.meeting-tag {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent);
+  border-radius: 6px;
+}
+
+/* ── PR List ───────────────────────────────────────────────────────── */
+.pr-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.pr-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.pr-row:last-child {
+  border-bottom: none;
+}
+
+.pr-state {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.pr-state.open {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.pr-state.closed {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+.pr-state.merged {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.pr-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pr-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pr-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ── Branch list ───────────────────────────────────────────────────── */
+.branch-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.branch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.branch-row:last-child {
+  border-bottom: none;
+}
+
+.branch-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.branch-badge {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.branch-badge.protected {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.branch-badge.default {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent);
+}
+
+/* ── Team stats page ───────────────────────────────────────────────── */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.team-member-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.team-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.team-info {
+  flex: 1;
+}
+
+.team-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.team-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.team-stat {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── My Work (developer) ───────────────────────────────────────────── */
+.my-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+
+.task-item:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.task-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-status-dot.todo { background: var(--text-muted); }
+.task-status-dot.in-progress { background: #f59e0b; }
+.task-status-dot.done { background: #10b981; }
+
+.task-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.task-detail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.task-priority {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.task-priority.high {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+.task-priority.medium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.task-priority.low {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}

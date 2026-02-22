@@ -1,91 +1,139 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   GitCommit,
   Users,
   BarChart3,
-  GitPullRequest,
   AlertTriangle,
   CheckCircle2,
   Clock,
   Star,
   GitFork,
   Bug,
+  RefreshCw,
+  Ticket,
+  CircleDot,
+  CheckCircle,
+  ListTodo,
 } from 'lucide-react';
 import { Card, StatCard, SectionHeader, Spinner } from '../../components/Card';
-import { github, subscribeDashboardStream } from '../../services/api';
+import { github, jira, tasks as tasksApi } from '../../services/api';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './Manager.css';
+
+const POLL_INTERVAL = 15_000; // 15 seconds
 
 export default function ManagerOverview() {
   const [repo, setRepo] = useState(null);
   const [commits, setCommits] = useState([]);
   const [contributors, setContributors] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [jiraStats, setJiraStats] = useState(null);
+  const [taskList, setTaskList] = useState([]);
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progressLoading, setProgressLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
+  /* ── Fetch all live data (GitHub + Jira + DB tasks) ────────────── */
+  const fetchData = useCallback(async (manual = false) => {
+    if (manual) setRefreshing(true);
+
+    const results = await Promise.allSettled([
+      github.getRepoInfo(),
+      github.getCommits('main', 7, 10),
+      github.getContributors(),
+      github.getCommitActivity(),
+      jira.getBoardSummary(),
+      tasksApi.getAll(),
+    ]);
+
+    const [repoRes, commitsRes, contribRes, actRes, jiraRes, tasksRes] = results;
+
+    if (repoRes.status === 'fulfilled')   setRepo(repoRes.value);
+    if (commitsRes.status === 'fulfilled') setCommits(Array.isArray(commitsRes.value) ? commitsRes.value.slice(0, 5) : []);
+    if (contribRes.status === 'fulfilled') setContributors(Array.isArray(contribRes.value) ? contribRes.value : []);
+    if (actRes.status === 'fulfilled')     setActivity(Array.isArray(actRes.value) ? actRes.value : []);
+    if (jiraRes.status === 'fulfilled')    setJiraStats(jiraRes.value);
+    if (tasksRes.status === 'fulfilled')   setTaskList(Array.isArray(tasksRes.value) ? tasksRes.value : []);
+
+    setLoading(false);
+    setLastUpdated(new Date());
+    if (manual) setRefreshing(false);
+  }, []);
+
+  /* ── Initial load + auto-poll every 15s ─────────────────────────── */
   useEffect(() => {
-    let unsub;
+    fetchData();
+    const id = setInterval(fetchData, POLL_INTERVAL);
+    return () => clearInterval(id);
+  }, [fetchData]);
 
-    async function load() {
-      try {
-        const [repoData, commitsData, contribData, actData] = await Promise.all([
-          github.getRepoInfo(),
-          github.getCommits(),
-          github.getContributors(),
-          github.getCommitActivity(),
-        ]);
-        setRepo(repoData);
-        setCommits(Array.isArray(commitsData) ? commitsData.slice(0, 5) : []);
-        setContributors(Array.isArray(contribData) ? contribData : []);
-        setActivity(Array.isArray(actData) ? actData : []);
-
-        // SSE for live updates
-        unsub = subscribeDashboardStream((type, data) => {
-          if (type === 'commits') setCommits(Array.isArray(data) ? data.slice(0, 5) : []);
-          if (type === 'contributors') setContributors(Array.isArray(data) ? data : []);
-          if (type === 'repo_info') setRepo(data);
-        });
-      } catch (err) {
-        console.error('Failed to load dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
-
+  /* ── AI progress report (one-time, expensive) ───────────────────── */
+  useEffect(() => {
+    (async () => {
       try {
         const report = await github.getProgressReport();
         setProgress(report);
       } catch (err) {
-        console.error('Failed to load progress report:', err);
+        console.error('Progress report failed:', err);
       } finally {
         setProgressLoading(false);
       }
-    }
-
-    load();
-    return () => unsub?.();
+    })();
   }, []);
+
+  /* ── Derived Jira metrics ───────────────────────────────────────── */
+  const jiraTotal      = jiraStats?.total ?? jiraStats?.total_issues ?? '—';
+  const jiraInProgress = jiraStats?.in_progress ?? jiraStats?.inProgress ?? '—';
+  const jiraDone       = jiraStats?.done ?? jiraStats?.completed ?? '—';
 
   return (
     <div className="manager-overview">
-      {/* Page header */}
+      {/* Page header with refresh controls */}
       <motion.div
         className="page-header"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1>Manager Dashboard</h1>
-        <p className="page-sub">Overview of your team's progress and activity</p>
+        <div className="page-header-row">
+          <div>
+            <h1>Manager Dashboard</h1>
+            <p className="page-sub">Live overview of your team's progress and activity</p>
+          </div>
+          <div className="page-header-actions">
+            {lastUpdated && (
+              <span className="last-updated">
+                Updated {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+            <button
+              className="refresh-btn"
+              onClick={() => fetchData(true)}
+              disabled={refreshing}
+              title="Refresh now"
+            >
+              <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
+            </button>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Stat grid */}
+      {/* GitHub stat grid */}
       <div className="stat-grid">
         <StatCard icon={Star} label="Stars" value={repo?.stars ?? repo?.stargazers_count} color="#f59e0b" delay={0.05} />
         <StatCard icon={GitFork} label="Forks" value={repo?.forks ?? repo?.forks_count} color="#06b6d4" delay={0.1} />
         <StatCard icon={Bug} label="Open Issues" value={repo?.open_issues ?? repo?.open_issues_count} color="#ef4444" delay={0.15} />
         <StatCard icon={Users} label="Contributors" value={contributors.length} color="#10b981" delay={0.2} />
+      </div>
+
+      {/* Jira + Tasks stat grid */}
+      <div className="stat-grid">
+        <StatCard icon={Ticket} label="Jira Tickets" value={jiraTotal} color="#6366f1" delay={0.1} />
+        <StatCard icon={CircleDot} label="In Progress" value={jiraInProgress} color="#f59e0b" delay={0.15} />
+        <StatCard icon={CheckCircle} label="Jira Done" value={jiraDone} color="#10b981" delay={0.2} />
+        <StatCard icon={ListTodo} label="DB Tasks" value={taskList.length || '—'} color="#8b5cf6" delay={0.25} />
       </div>
 
       {/* Main grid: Activity chart + AI Progress */}

@@ -54,27 +54,35 @@ export default function JiraPage() {
   const [expandedTicket, setExpandedTicket] = useState(null);
 
   useEffect(() => {
+    let retryTimer;
     async function load() {
-      try {
-        const [proj, sum, tix, spr, usr] = await Promise.all([
-          jira.getProject(),
-          jira.getBoardSummary(),
-          jira.getTickets(),
-          jira.getSprints(),
-          jira.getUsers(),
-        ]);
-        setProject(proj);
-        setSummary(sum);
-        setTickets(Array.isArray(tix) ? tix : []);
-        setSprints(Array.isArray(spr) ? spr : []);
-        setUsers(Array.isArray(usr) ? usr : []);
-      } catch (err) {
-        console.error('Failed to load Jira data:', err);
-      } finally {
-        setLoading(false);
-      }
+      // Phase 1: critical data (each settles independently)
+      const [projRes, sumRes, tixRes] = await Promise.allSettled([
+        jira.getProject(),
+        jira.getBoardSummary(),
+        jira.getTickets(),
+      ]);
+
+      let anyLoaded = false;
+      if (projRes.status === 'fulfilled') { setProject(projRes.value); anyLoaded = true; }
+      if (sumRes.status === 'fulfilled')  { setSummary(sumRes.value); anyLoaded = true; }
+      if (tixRes.status === 'fulfilled')  { setTickets(Array.isArray(tixRes.value) ? tixRes.value : []); anyLoaded = true; }
+
+      setLoading(false);
+
+      // Auto-retry once if nothing loaded
+      if (!anyLoaded) { retryTimer = setTimeout(load, 5000); return; }
+
+      // Phase 2: secondary data (non-blocking)
+      const [sprRes, usrRes] = await Promise.allSettled([
+        jira.getSprints(),
+        jira.getUsers(),
+      ]);
+      if (sprRes.status === 'fulfilled') setSprints(Array.isArray(sprRes.value) ? sprRes.value : []);
+      if (usrRes.status === 'fulfilled') setUsers(Array.isArray(usrRes.value) ? usrRes.value : []);
     }
     load();
+    return () => clearTimeout(retryTimer);
   }, []);
 
   // ── Derived data for charts ───────────────────────────────────────

@@ -6,13 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // ── GitHub MCP server (must be before /api catch-all) ─────────
-      '/mcp': {
-        target: 'http://localhost:3003',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/mcp/, ''),
-      },
-      // ── FastAPI backend ──────────────────────────────────────────
+      // ── FastAPI backend (handles everything including /api/github/*) ──
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,

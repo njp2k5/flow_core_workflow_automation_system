@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   GitCommit, Users, BarChart3, Star, GitFork, Bug, ListTodo,
-  CheckCircle2, Clock, TrendingUp, AlertTriangle, Zap,
+  CheckCircle2, Clock, TrendingUp, AlertTriangle, Zap, RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Card, StatCard, SectionHeader, Spinner } from '../../components/Card';
-import { github, tasks as tasksApi, subscribeDashboardStream } from '../../services/api';
+import { github, tasks as tasksApi } from '../../services/api';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import '../manager/Manager.css';
 import './Developer.css';
+
+const POLL_INTERVAL = 20_000; // 20 seconds
 
 export default function DeveloperOverview() {
   const { user } = useAuth();
@@ -19,26 +21,45 @@ export default function DeveloperOverview() {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progressLoading, setProgressLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
+  /* ── Fetch live data (tasks + activity) ──────────────────────────── */
+  const fetchData = useCallback(async (manual = false) => {
+    if (manual) setRefreshing(true);
+
+    const results = await Promise.allSettled([
+      tasksApi.getMyTasks(),
+      github.getCommitActivity(),
+    ]);
+
+    const [tasksRes, actRes] = results;
+    const tasksData = tasksRes.status === 'fulfilled' ? tasksRes.value : [];
+    const actData = actRes.status === 'fulfilled' ? actRes.value : [];
+
+    setMyTasks(Array.isArray(tasksData) ? tasksData : []);
+    setActivity(Array.isArray(actData) ? actData : []);
+    const taskArr = Array.isArray(tasksData) ? tasksData : [];
+    const actArr = Array.isArray(actData) ? actData : [];
+    const inProgress = taskArr.filter(t => t.status === 'in-progress').length;
+    const completed = taskArr.filter(t => t.status === 'done').length;
+    setStats({ commitsThisWeek: actArr.reduce((s, w) => s + (w.commits || 0), 0), prsOpen: 0, tasksCompleted: completed, tasksInProgress: inProgress });
+
+    setLoading(false);
+    setLastUpdated(new Date());
+    if (manual) setRefreshing(false);
+  }, []);
+
+  /* ── Initial load + auto-poll ────────────────────────────────────── */
   useEffect(() => {
-    async function load() {
-      try {
-        const [tasksData, actData] = await Promise.all([
-          tasksApi.getMyTasks(),
-          github.getCommitActivity(),
-        ]);
-        setMyTasks(Array.isArray(tasksData) ? tasksData : []);
-        setActivity(Array.isArray(actData) ? actData : []);
-        // Derive stats from real data
-        const inProgress = (Array.isArray(tasksData) ? tasksData : []).filter(t => t.status === 'in-progress').length;
-        const completed = (Array.isArray(tasksData) ? tasksData : []).filter(t => t.status === 'done').length;
-        setStats({ commitsThisWeek: (Array.isArray(actData) ? actData : []).reduce((s, w) => s + (w.commits || 0), 0), prsOpen: 0, tasksCompleted: completed, tasksInProgress: inProgress });
-      } catch (err) {
-        console.error('Failed to load developer data:', err);
-      } finally {
-        setLoading(false);
-      }
+    fetchData();
+    const id = setInterval(fetchData, POLL_INTERVAL);
+    return () => clearInterval(id);
+  }, [fetchData]);
 
+  /* ── AI report (one-time, expensive) ─────────────────────────────── */
+  useEffect(() => {
+    (async () => {
       try {
         const report = await github.getProgressReport();
         setProgress(report);
@@ -47,8 +68,7 @@ export default function DeveloperOverview() {
       } finally {
         setProgressLoading(false);
       }
-    }
-    load();
+    })();
   }, []);
 
   const activeTasks = myTasks.filter((t) => t.status !== 'done');
@@ -62,9 +82,19 @@ export default function DeveloperOverview() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="dev-greeting">
-          <h1>Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
-          <p className="page-sub">Here's your personalized summary for today</p>
+        <div className="page-header-row">
+          <div className="dev-greeting">
+            <h1>Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
+            <p className="page-sub">Here's your personalized summary for today</p>
+          </div>
+          <div className="page-header-actions">
+            {lastUpdated && (
+              <span className="last-updated">Updated {lastUpdated.toLocaleTimeString()}</span>
+            )}
+            <button className="refresh-btn" onClick={() => fetchData(true)} disabled={refreshing} title="Refresh now">
+              <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
+            </button>
+          </div>
         </div>
       </motion.div>
 

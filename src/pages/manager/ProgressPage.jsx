@@ -1,39 +1,73 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, CheckCircle2, AlertTriangle, TrendingUp } from 'lucide-react';
+import { BarChart3, CheckCircle2, AlertTriangle, TrendingUp, RefreshCw } from 'lucide-react';
 import { Card, SectionHeader, Spinner } from '../../components/Card';
 import { github } from '../../services/api';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './Manager.css';
 
+const POLL_INTERVAL = 20_000; // 20 seconds
+
 export default function ProgressPage() {
   const [progress, setProgress] = useState(null);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  /* ── Poll chart data ─────────────────────────────────────────────── */
+  const fetchActivity = useCallback(async (manual = false) => {
+    if (manual) setRefreshing(true);
+    try {
+      const act = await github.getCommitActivity();
+      setActivity(Array.isArray(act) ? act : []);
+    } catch (err) {
+      console.error('Failed to load activity:', err);
+    } finally {
+      setLoading(false);
+      setLastUpdated(new Date());
+      if (manual) setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function load() {
+    fetchActivity();
+    const id = setInterval(fetchActivity, POLL_INTERVAL);
+    return () => clearInterval(id);
+  }, [fetchActivity]);
+
+  /* ── AI report (one-time, expensive) ─────────────────────────────── */
+  useEffect(() => {
+    (async () => {
       try {
-        const [report, act] = await Promise.all([
-          github.getProgressReport(),
-          github.getCommitActivity(),
-        ]);
+        const report = await github.getProgressReport();
         setProgress(report);
-        setActivity(Array.isArray(act) ? act : []);
       } catch (err) {
-        console.error('Failed to load progress data:', err);
+        console.error('Failed to load progress report:', err);
       } finally {
-        setLoading(false);
+        setReportLoading(false);
       }
-    }
-    load();
+    })();
   }, []);
 
   return (
     <div className="manager-overview">
       <motion.div className="page-header" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1>Progress Tracking</h1>
-        <p className="page-sub">AI-powered analysis of team performance and project health</p>
+        <div className="page-header-row">
+          <div>
+            <h1>Progress Tracking</h1>
+            <p className="page-sub">AI-powered analysis of team performance and project health</p>
+          </div>
+          <div className="page-header-actions">
+            {lastUpdated && (
+              <span className="last-updated">Updated {lastUpdated.toLocaleTimeString()}</span>
+            )}
+            <button className="refresh-btn" onClick={() => fetchActivity(true)} disabled={refreshing} title="Refresh now">
+              <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
+            </button>
+          </div>
+        </div>
       </motion.div>
 
       <div className="overview-grid">
@@ -80,7 +114,7 @@ export default function ProgressPage() {
         </Card>
       </div>
 
-      {loading && !progress ? (
+      {reportLoading && !progress ? (
         <Card delay={0.2}><Spinner text="Generating AI progress report…" /></Card>
       ) : progress && (
         <Card delay={0.2}>

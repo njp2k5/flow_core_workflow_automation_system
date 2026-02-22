@@ -1,37 +1,116 @@
 // ── FastAPI Backend (proxied through Vite in dev) ─────────────────────
 const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_URL || '';
 
-// ── GitHub MCP Server (proxied as /mcp → localhost:3003) ──────────────
-const MCP_BASE = import.meta.env.VITE_MCP_URL || '/mcp';
+// MCP_BASE kept for reference only – all GitHub calls now go through FastAPI
+// const MCP_BASE = import.meta.env.VITE_MCP_URL || '/mcp';
 
-// ── Generic fetch wrapper ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+//  IN-MEMORY CACHE  – stale-while-revalidate
+// ═══════════════════════════════════════════════════════════════════════
+const _cache = new Map();           // key → { data, ts }
+const _inflight = new Map();        // key → Promise (dedup concurrent calls)
+const DEFAULT_TTL = 15_000;         // 15s – stale quickly for live feel
+const HARD_TTL   = 45_000;          // 45s – fully expire fast
+
+function cacheKey(base, path) { return `${base}${path}`; }
+
+function getCached(key) {
+  const entry = _cache.get(key);
+  if (!entry) return null;
+  const age = Date.now() - entry.ts;
+  if (age > HARD_TTL) { _cache.delete(key); return null; }
+  return { data: entry.data, stale: age > DEFAULT_TTL };
+}
+
+function setCache(key, data) {
+  _cache.set(key, { data, ts: Date.now() });
+}
+
+/** Clear cache for a specific key or prefix */
+export function invalidateCache(prefix) {
+  if (!prefix) { _cache.clear(); return; }
+  for (const k of _cache.keys()) {
+    if (k.startsWith(prefix)) _cache.delete(k);
+  }
+}
+
+// ── Generic fetch wrapper with auto-retry ─────────────────────────────
 async function request(base, path, options = {}) {
   const token = localStorage.getItem('token');
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-
   const method = (options.method || 'GET').toUpperCase();
   const isBodyRequest = method !== 'GET' && method !== 'HEAD';
+  const maxRetries = isBodyRequest ? 0 : 2; // only retry GETs
 
-  try {
-    const res = await fetch(`${base}${path}`, {
-      headers: {
-        // Only set Content-Type on requests that carry a body
-        ...(isBodyRequest ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
-      ...options,
-      signal: options.signal || controller.signal,
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || 'Request failed');
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000); // 10s – fail fast
+
+    try {
+      const res = await fetch(`${base}${path}`, {
+        headers: {
+          ...(isBodyRequest ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...options.headers,
+        },
+        ...options,
+        signal: options.signal || controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Request failed');
+      }
+      return res.json();
+    } catch (err) {
+      clearTimeout(timeout);
+      lastError = err;
+      // Don't retry if it was intentionally aborted by caller
+      if (options.signal?.aborted) throw err;
+      console.warn(`[API] ${base}${path} attempt ${attempt + 1}/${maxRetries + 1} failed:`, err.message);
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1))); // 500ms, 1s
+      }
     }
-    return res.json();
-  } finally {
-    clearTimeout(timeout);
   }
+  throw lastError;
+}
+
+/**
+ * Cached GET wrapper. Returns cached data instantly if available,
+ * and revalidates in the background if stale.
+ * For non-GET requests, falls through to raw request().
+ */
+async function cachedGet(base, path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET') return request(base, path, options);
+
+  const key = cacheKey(base, path);
+  const cached = getCached(key);
+
+  // If fresh cache exists, return immediately
+  if (cached && !cached.stale) return cached.data;
+
+  // If stale cache exists, return it AND revalidate in background
+  if (cached && cached.stale) {
+    // Background refresh (fire and forget)
+    if (!_inflight.has(key)) {
+      const p = request(base, path, options)
+        .then((data) => { setCache(key, data); return data; })
+        .finally(() => _inflight.delete(key));
+      _inflight.set(key, p);
+    }
+    return cached.data;
+  }
+
+  // No cache – deduplicate concurrent identical requests
+  if (_inflight.has(key)) return _inflight.get(key);
+
+  const p = request(base, path, options)
+    .then((data) => { setCache(key, data); return data; })
+    .finally(() => _inflight.delete(key));
+  _inflight.set(key, p);
+  return p;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -55,15 +134,15 @@ export const auth = {
       return res.json();
     });
   },
-  me: () => request(FASTAPI_BASE, '/auth/me'),
+  me: () => cachedGet(FASTAPI_BASE, '/auth/me'),
 };
 
 // ═══════════════════════════════════════════════════════════════════════
 //  TASKS  (FastAPI + Postgres)
 // ═══════════════════════════════════════════════════════════════════════
 export const tasks = {
-  getAll: () => request(FASTAPI_BASE, '/tasks'),
-  getMyTasks: () => request(FASTAPI_BASE, '/tasks/me'),
+  getAll: () => cachedGet(FASTAPI_BASE, '/tasks'),
+  getMyTasks: () => cachedGet(FASTAPI_BASE, '/tasks/me'),
   create: (payload) =>
     request(FASTAPI_BASE, '/tasks', {
       method: 'POST',
@@ -85,23 +164,23 @@ export const tasks = {
 //  DEVELOPERS  (FastAPI + Postgres)
 // ═══════════════════════════════════════════════════════════════════════
 export const developers = {
-  getAll: () => request(FASTAPI_BASE, '/developers'),
-  getStats: (id) => request(FASTAPI_BASE, `/developers/${id}/stats`),
+  getAll: () => cachedGet(FASTAPI_BASE, '/developers'),
+  getStats: (id) => cachedGet(FASTAPI_BASE, `/developers/${id}/stats`),
 };
 
 // ═══════════════════════════════════════════════════════════════════════
 //  MEETINGS  (FastAPI + Postgres)
 // ═══════════════════════════════════════════════════════════════════════
 export const meetings = {
-  getSummaries: () => request(FASTAPI_BASE, '/meetings/summaries'),
+  getSummaries: () => cachedGet(FASTAPI_BASE, '/meetings/summaries'),
 };
 
 // ═══════════════════════════════════════════════════════════════════════
 //  PROJECTS  (FastAPI + Postgres)
 // ═══════════════════════════════════════════════════════════════════════
 export const projects = {
-  getAll: () => request(FASTAPI_BASE, '/projects'),
-  getProgress: (id) => request(FASTAPI_BASE, `/projects/${id}/progress`),
+  getAll: () => cachedGet(FASTAPI_BASE, '/projects'),
+  getProgress: (id) => cachedGet(FASTAPI_BASE, `/projects/${id}/progress`),
 };
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -271,67 +350,50 @@ export const srs = {
 //  JIRA  (FastAPI proxy)
 // ═══════════════════════════════════════════════════════════════════════
 export const jira = {
-  getProject:      () => request(FASTAPI_BASE, '/api/jira/projects'),
-  getTickets:      () => request(FASTAPI_BASE, '/api/jira/tickets'),
-  getBoardSummary: () => request(FASTAPI_BASE, '/api/jira/board/summary'),
-  getSprints:      () => request(FASTAPI_BASE, '/api/jira/sprints'),
-  getUsers:        () => request(FASTAPI_BASE, '/api/jira/users'),
+  getProject:      () => cachedGet(FASTAPI_BASE, '/api/jira/projects'),
+  getTickets:      () => cachedGet(FASTAPI_BASE, '/api/jira/tickets'),
+  getBoardSummary: () => cachedGet(FASTAPI_BASE, '/api/jira/board/summary'),
+  getSprints:      () => cachedGet(FASTAPI_BASE, '/api/jira/sprints'),
+  getUsers:        () => cachedGet(FASTAPI_BASE, '/api/jira/users'),
 };
 
 // ═══════════════════════════════════════════════════════════════════════
 //  CONFLUENCE  (FastAPI proxy)
 // ═══════════════════════════════════════════════════════════════════════
 export const confluence = {
-  getSpace: () => request(FASTAPI_BASE, '/api/confluence/space'),
-  getPages: () => request(FASTAPI_BASE, '/api/confluence/pages'),
+  getSpace: () => cachedGet(FASTAPI_BASE, '/api/confluence/space'),
+  getPages: () => cachedGet(FASTAPI_BASE, '/api/confluence/pages'),
 };
 
 // ═══════════════════════════════════════════════════════════════════════
-//  GITHUB MCP SERVER  (http://localhost:3003)
+//  GITHUB  (FastAPI proxy – /api/github/*)
 // ═══════════════════════════════════════════════════════════════════════
 export const github = {
-  health: () => request(MCP_BASE, '/health'),
+  health: () => cachedGet(FASTAPI_BASE, '/api/github/health'),
 
   // Commits
   getCommits: (branch = 'main', sinceDays = 7, perPage = 30) =>
-    request(MCP_BASE, `/api/commits?branch=${branch}&since_days=${sinceDays}&per_page=${perPage}`),
-  getCommit: (sha) => request(MCP_BASE, `/api/commits/${sha}`),
-  getCommitSummary: (sha) => request(MCP_BASE, `/api/commits/${sha}/summary`),
+    cachedGet(FASTAPI_BASE, `/api/github/commits?branch=${branch}&since_days=${sinceDays}&per_page=${perPage}`),
+  getCommit: (sha) => cachedGet(FASTAPI_BASE, `/api/github/commits/${sha}`),
+  getCommitSummary: (sha) => cachedGet(FASTAPI_BASE, `/api/github/commits/${sha}/summary`),
   getCommitsSummary: (sinceDays = 7) =>
-    request(MCP_BASE, `/api/commits-summary?since_days=${sinceDays}`),
+    cachedGet(FASTAPI_BASE, `/api/github/commits-summary?since_days=${sinceDays}`),
 
   // Progress & contributors – parse AI output before returning
   getProgressReport: async (sinceDays = 7) => {
-    const raw = await request(MCP_BASE, `/api/progress-report?since_days=${sinceDays}`);
+    const raw = await cachedGet(FASTAPI_BASE, `/api/github/progress-report?since_days=${sinceDays}`);
     return parseAIReport(raw);
   },
-  getContributors: () => request(MCP_BASE, '/api/contributors'),
+  getContributors: () => cachedGet(FASTAPI_BASE, '/api/github/contributors'),
 
   // Repo
-  getRepoInfo: () => request(MCP_BASE, '/api/repo-info'),
-  getCommitActivity: () => request(MCP_BASE, '/api/commit-activity'),
+  getRepoInfo: () => cachedGet(FASTAPI_BASE, '/api/github/repo-info'),
+  getCommitActivity: () => cachedGet(FASTAPI_BASE, '/api/github/commit-activity'),
 
   // PRs & branches
   getPullRequests: (state = 'all', perPage = 10) =>
-    request(MCP_BASE, `/api/pull-requests?state=${state}&per_page=${perPage}`),
-  getBranches: () => request(MCP_BASE, '/api/branches'),
+    cachedGet(FASTAPI_BASE, `/api/github/pull-requests?state=${state}&per_page=${perPage}`),
+  getBranches: () => cachedGet(FASTAPI_BASE, '/api/github/branches'),
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-//  SSE STREAM  (/api/stream/dashboard)
-// ═══════════════════════════════════════════════════════════════════════
-export function subscribeDashboardStream(onData) {
-  const es = new EventSource(`${MCP_BASE}/api/stream/dashboard`);
 
-  es.addEventListener('commits', (e) => onData('commits', JSON.parse(e.data)));
-  es.addEventListener('contributors', (e) => onData('contributors', JSON.parse(e.data)));
-  es.addEventListener('branches', (e) => onData('branches', JSON.parse(e.data)));
-  es.addEventListener('pull_requests', (e) => onData('pull_requests', JSON.parse(e.data)));
-  es.addEventListener('repo_info', (e) => onData('repo_info', JSON.parse(e.data)));
-
-  es.onerror = () => {
-    console.warn('SSE connection lost – will auto-reconnect');
-  };
-
-  return () => es.close();
-}

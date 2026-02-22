@@ -21,21 +21,22 @@ export default function ConfluencePage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    let retryTimer;
     async function load() {
-      try {
-        const [spaceData, pagesData] = await Promise.all([
-          confluence.getSpace(),
-          confluence.getPages(),
-        ]);
-        setSpace(spaceData);
-        setPages(Array.isArray(pagesData) ? pagesData : []);
-      } catch (err) {
-        console.error('Failed to load Confluence data:', err);
-      } finally {
-        setLoading(false);
-      }
+      const [spaceRes, pagesRes] = await Promise.allSettled([
+        confluence.getSpace(),
+        confluence.getPages(),
+      ]);
+
+      let anyLoaded = false;
+      if (spaceRes.status === 'fulfilled') { setSpace(spaceRes.value); anyLoaded = true; }
+      if (pagesRes.status === 'fulfilled') { setPages(Array.isArray(pagesRes.value) ? pagesRes.value : []); anyLoaded = true; }
+
+      setLoading(false);
+      if (!anyLoaded) retryTimer = setTimeout(load, 5000);
     }
     load();
+    return () => clearTimeout(retryTimer);
   }, []);
 
   const filteredPages = pages.filter((p) =>

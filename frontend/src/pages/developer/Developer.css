@@ -1,0 +1,67 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Developer-specific Styles
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.dev-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dev-greeting h1 {
+  font-size: 1.5rem;
+}
+
+.task-count {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.my-work-card .my-tasks-list {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.task-item.done {
+  opacity: 0.65;
+}
+
+.task-item.done .task-title {
+  text-decoration: line-through;
+}
+
+/* ── My Work full page ─────────────────────────────────────────────── */
+.work-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.work-stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.work-stat-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.work-stat-mini .stat-value {
+  font-size: 1.3rem;
+}
+
+.work-stat-mini .stat-label {
+  font-size: 0.75rem;
+  margin-top: 2px;
+}

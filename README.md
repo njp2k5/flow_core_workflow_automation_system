@@ -13,7 +13,7 @@ This repository contains:
 
 ## System Architecture
 
-![System Architecture](assets/architecture.jpg)
+![System Architecture](assets/architecture.jpeg)
 
 > The architecture combines recording ingestion, transcription, LLM processing, database persistence, issue management, and UI surfaces.
 
